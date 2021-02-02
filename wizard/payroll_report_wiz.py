@@ -495,6 +495,7 @@ class PayslipBatches(models.Model):
             calculo_dias_trabajo = 0.0
             resta_dias = 0
 
+            #Deducciones ANUALES ES ESTE FOR 
             dedu_ingre_anual = self.env['model_tipo_dedu_ingre_anuales'].search([('employee_id', '=', slip.employee_id.id), ('tipo_activo', '=', True)])
             #SUMA DEL MONTO ANUAL DE INGRESOS O DEDUCCIONES EXTRAS ANUALMENTE
             for ingre_anue in dedu_ingre_anual:
@@ -537,6 +538,7 @@ class PayslipBatches(models.Model):
             to_ingre5 = 0.0
             to_ingre66 = 0.0
             to_ingre77 = 0.0
+            #SUMA DE LOSINGRESOS AGREGADOS EN EL SISTEMA
             ingre_emple = self.env['test_model_ingresos'].search([('tipo_ingre_id.category_id.code', '=', 'INGRE'), ('employee_id', '=', slip.employee_id.id)])
             if ingre_emple:     
                 for petu in ingre_emple:
@@ -1440,8 +1442,10 @@ class PayslipBatches(models.Model):
 
 
             guardar_sueldo = 0.0
+            validar_sueldo_por_ingreso = False
             if sueldo_isre > 0.0 and year_actual == year_mo and month_actual == fee:
-               guardar_sueldo = (contrato_validacion.wage - sueldo_isre) 
+               guardar_sueldo = (contrato_validacion.wage - sueldo_isre)
+               validar_sueldo_por_ingreso = True 
             else:
                guardar_sueldo = (contrato_validacion.wage / 2)
             
@@ -1460,9 +1464,15 @@ class PayslipBatches(models.Model):
                                     'aguinaldo_sueldo': False,
                                     'year_sueldo': year_actual,
                                     'employee_id': slip.employee_id.id})
+                    
+            
+            #Este validacion hace que se escriba el sueldo completo cuando los empleados ingresen a mediados del mes
+            if validar_sueldo_por_ingreso == True:
+                worksheet.write(row, 20, guardar_sueldo, cell_number_format) 
 
             #SUELDO ACUMULADO DESDE QUE INGRESO A LABORAR
             acumulado_sueldos = self.env['hr.employee.sueldos'].search([('employee_id', '=', slip.employee_id.id)])
+            
             total_sueldo_acumulado = 0.0  
 
             for sueldo_total in acumulado_sueldos:
@@ -1470,8 +1480,7 @@ class PayslipBatches(models.Model):
                 sueldo_year = sueldo_date.year
                 if sueldo_year == year_actual and sueldo_date.month != month_actual:
                    total_sueldo_acumulado += sueldo_total['monto_sueldo']
-
-         
+                       
 
             #Sueldo restante de la fecha actual a fecha final del year
             # 100,000 * 1 = 100,000
@@ -1674,8 +1683,16 @@ class PayslipBatches(models.Model):
             for code in all_col_codigo:
                 per = slip.get_amount_from_rule_code(code)[0]
                 amt = (per/2)
-                #Total_Ingreso
-                total = va_in
+
+                #Total_Ingreso 
+                if validar_sueldo_por_ingreso == True:
+                   worksheet.write(row, 20, guardar_sueldo, cell_number_format) 
+                   sueldo_restar = (contrato_validacion.wage/2)
+                   suma = (va_in - sueldo_restar)
+                   total = suma + guardar_sueldo
+                else:
+                   total = va_in
+
                 #TOtal Deduccion
                 total_deduccion = va_dedu
 
