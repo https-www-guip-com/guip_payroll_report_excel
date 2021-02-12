@@ -107,6 +107,58 @@
     </record>
 
    
+   <!--RAP ACUMULADOS-->
+
+    <record model='ir.ui.view' id='employee_document_rap_acumulado_form_view'>
+        <field name="name">hr.employee.document.form.rap_acumulado</field>
+        <field name="model">hr.employee.rap_acumulado</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id" />
+                            <field name="fecha_sueldo"/>
+                            <field name="monto_sueldo"/>
+                            <field name="year_sueldo"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record model='ir.ui.view' id='employee_document_rap_acumulado_tree_view'>
+        <field name="name">hr.employee.document.rap_acumulado.tree</field>
+        <field name="model">hr.employee.rap_acumulado</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="employee_id"/>
+                <field name="fecha_sueldo"/>
+                <field name="monto_sueldo"/>
+                <field name="year_sueldo"/>
+            </tree>
+        </field>
+    </record>
+
+
+    <record model="ir.ui.view" id="hr_employee_rap_acumulado_form_view">
+        <field name="name">hr.employee.form.view_acumulado_rap_acumulado</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+           
+            <div class="oe_button_box" position="inside">
+                
+                <button class="oe_stat_button" name="document_view_rap" type="object" icon="fa-usd">
+                    <field string="RAP" name="document_count_rap" widget="statinfo"/>
+                </button>
+
+            </div>
+        
+        </field>
+    </record>
+
 
    
 

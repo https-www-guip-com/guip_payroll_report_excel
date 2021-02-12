@@ -113,3 +113,48 @@ class HrEmployeeSueldos(models.Model):
     document_count_sueldo = fields.Integer(compute='_document_count_sueldo', string='# Sueldos')
 
 
+class HRemployee_rap_Acumulado(models.Model):
+    _name = 'hr.employee.rap_acumulado'
+    _description = 'RAP Acumulado'
+    
+    fecha_sueldo = fields.Date(string='Fecha Pago', required=True)
+    monto_sueldo = fields.Float(string='Monto en LPS', required=True) 
+    year_sueldo = fields.Integer(string='Año', required=True) 
+
+    def default_employee2(self):
+        return self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+     
+    employee_id = fields.Many2one('hr.employee', string="Empleado", 
+                                  default=default_employee2, required=True, 
+                                  ondelete='cascade', index=True)
+
+class HrEmployeeRAP(models.Model):
+    _inherit = 'hr.employee'
+
+    @api.multi
+    def _document_count_rap(self):
+        for each in self:
+            document_ids = self.env['hr.employee.rap_acumulado'].search([('employee_id', '=', each.id)])
+            each.document_count_rap = len(document_ids)
+
+    @api.multi
+    def document_view_rap(self):
+        self.ensure_one()
+        domain = [
+            ('employee_id', '=', self.id)]
+        return {
+            'name': _('RAP'),
+            'domain': domain,
+            'res_model': 'hr.employee.rap_acumulado',
+            'type': 'ir.actions.act_window',
+            'view_id': False,
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'help': _('''<p class="oe_view_nocontent_create">
+                           Click para crear un nuevo RAP
+                        </p>'''),
+            'limit': 80,
+            'context': "{'default_employee_ref': '%s'}" % self.id
+        }
+
+    document_count_rap = fields.Integer(compute='_document_count_rap', string='RAP')

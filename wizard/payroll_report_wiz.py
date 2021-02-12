@@ -1548,12 +1548,14 @@ class PayslipBatches(models.Model):
             #
             #fecha_mess_ingreso = fecha_real_in.month
             if month_actual == fecha_real_in.month and fecha_real_in.day > 15:
-                to_descu1 = to_ihss
+                to_descu1 = to_rap_anual 
+                #to_ihss
             else:
-                to_descu1 = (to_ihss/2)
+                to_descu1 = to_rap_anual
+                #(to_ihss/2)
             #Asignacion del calculo del RAP
             #total_rap
-            to_descu2 = total_rap
+            to_descu2 = tosumaa
             to_descu3 = 0.0
             to_descu4 = 0.0
             to_descu5 = 0.0
@@ -1825,9 +1827,9 @@ class PayslipBatches(models.Model):
                         'amount': tot_sueld
                     })
                 if record.code == 'SQ':
-                    total_sueldo_quince += t1
+                    total_sueldo_quince += guardar_sueldo
                     record.write({
-                        'amount': t1
+                        'amount': guardar_sueldo
                     })
 
                 if record.code == 'COMI':
