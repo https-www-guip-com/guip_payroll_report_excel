@@ -1057,12 +1057,31 @@ class PayslipBatches(models.Model):
                     to_ingre77 = pre_ingre_dedu_total
             
             #CALCULO DEL RAP
+            #OBTENER TECHO
             seguro_configu = self.env['model_configuraciones_nomina'].search([('tipo_activo', '=', True)])
-            
+            #CREAR EL RAP
+
+            #CREACION DEL SUELDO ACUMULADO QUINCENAL, FALTA VALIDAR LO DEL AÑO 
+            rap_acumul_creacion = self.env['hr.employee.rap_acumulado'].search([('employee_id', '=', slip.employee_id.id),('fecha_sueldo', '=', self.date_end),('year_sueldo', '=', year_actual)])
+            rap_data_sueldo_obj = self.env['hr.employee.rap_acumulado']   
+
+            #FORMULA RAP SUELDO
             to_rap = (tot_sueld - seguro_configu.techo_rap)
             to_raa =  (to_rap * 0.015)
             total_rap = float_round((to_raa/2), precision_digits=2)  
-            
+          
+            #CREO EL RAP QUINCENAL EN LA PESTANA DE ACUMULADOS DEL RAP
+            if len(rap_acumul_creacion) > 0:
+                    nada = 0.0
+            else:    
+                rap_data_sueldo_obj.create({'fecha_sueldo': self.date_end,
+                                            'monto_sueldo':total_rap,
+                                            'year_sueldo': year_actual,
+                                            'employee_id': slip.employee_id.id})
+
+            #to_rap = (tot_sueld - seguro_configu.techo_rap)
+            #to_raa =  (to_rap * 0.015)
+              
             #ESTO ES PORQUE NO SE COBRA EL RAP
             #to_rap = 0
             #to_raa =  0 
@@ -1403,7 +1422,26 @@ class PayslipBatches(models.Model):
             #EL CALCULO DEL RAP ES A 3 MESES PORQUE DESDE OCTUBRE DEL 2020 SE EMPIEZA A COBRAR
             #EL OTRO AÑO 2021 CAMBIAR ESTE VALOR DE 3 POR -- fecha_actual_sueldoacumulado
             #YA QUE SE TIENE A CALCULAR A LOS 12 MESES DEL AÑO
-            to_rap_anual = (to_raa * 12)
+            rap_acumul_year = self.env['hr.employee.rap_acumulado'].search([('employee_id', '=', slip.employee_id.id),('year_sueldo', '=', year_actual)])
+            acumul_Rap = 0
+            rap_final_anual = 0
+
+            for rapacu in rap_acumul_year:
+                fe = rapacu['fecha_sueldo']
+                if year_actual == fe.year and month_actual != fe.month:
+                   acumul_Rap += rapacu['monto_sueldo']
+            
+            #Restante del RAP POR LOS MESES QUE FALTAN DEL YEAR
+            rap_restante_year = (to_raa * fecha_actual_sueldoacumulado)
+
+            #Suma total del sueldo acumulado + el sueldo restante    
+            if acumul_Rap > 0:
+               rap_final_anual = (acumul_Rap + rap_restante_year)
+            else:
+               rap_final_anual = rap_restante_year
+   
+            #RAP ANUAL COMPLETO ACUMULADO + EL RESTANTE DEL YEAR
+            to_rap_anual = rap_final_anual
 
             #CALCULO DEL IHSS  479.34  / 2 ya que es quincenal
             to_ihss = seguro_configu.monto_lps
@@ -1548,14 +1586,12 @@ class PayslipBatches(models.Model):
             #
             #fecha_mess_ingreso = fecha_real_in.month
             if month_actual == fecha_real_in.month and fecha_real_in.day > 15:
-                to_descu1 = to_rap_anual 
-                #to_ihss
+                to_descu1 = to_ihss
             else:
-                to_descu1 = to_rap_anual
-                #(to_ihss/2)
+                to_descu1 = (to_ihss/2)
             #Asignacion del calculo del RAP
             #total_rap
-            to_descu2 = tosumaa
+            to_descu2 = total_rap
             to_descu3 = 0.0
             to_descu4 = 0.0
             to_descu5 = 0.0
