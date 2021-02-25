@@ -1512,24 +1512,30 @@ class PayslipBatches(models.Model):
             acumulado_sueldos = self.env['hr.employee.sueldos'].search([('employee_id', '=', slip.employee_id.id)])
             
             total_sueldo_acumulado = 0.0  
-
+            total_restar = 0.0
             for sueldo_total in acumulado_sueldos:
                 sueldo_date = sueldo_total['fecha_sueldo']
                 sueldo_year = sueldo_date.year
                 if sueldo_year == year_actual and sueldo_date.month != month_actual:
                    total_sueldo_acumulado += sueldo_total['monto_sueldo']
-                       
+                if sueldo_year == year_actual and sueldo_date.month == month_actual:
+                   total_restar += sueldo_total['monto_sueldo']
 
+                       
             #Sueldo restante de la fecha actual a fecha final del year
-            # 100,000 * 1 = 100,000
+            # 100,000 * 1 = 100,000 ------ ex----220,000
             sueldo_restante_year = (contrato_validacion.wage * fecha_actual_sueldoacumulado)
 
             #Suma total del sueldo acumulado + el sueldo restante    
+            
             if total_sueldo_acumulado > 0:
                 sueldo_final_anual = (total_sueldo_acumulado + sueldo_restante_year)
             else:
-               sueldo_final_anual = sueldo_restante_year
-   
+                if validar_sueldo_por_ingreso == True:
+                    sueldo_final_anual = (sueldo_restante_year - total_restar)
+                else:
+                    sueldo_final_anual = sueldo_restante_year
+
             nsu = sueldo_final_anual + ingre_dedu_total + ingre_total_dolar
        
 
@@ -1574,7 +1580,13 @@ class PayslipBatches(models.Model):
             #DVIDIR TOTAL ENTRE LOS MESES RESTANTES
             impuesto_completo_mensu = (nop / meses_restantes)
             #DIVIR QUINCENAL
-            total_isr = (impuesto_completo_mensu / 2) 
+            te_isr = (impuesto_completo_mensu / 2) 
+            #Condicion si es negativo
+            if te_isr < 0:
+                total_isr = 0
+            else:
+                total_isr = te_isr
+
             #/ mes_calcular
             #Deducciones 
             total_dedu = 0.0
