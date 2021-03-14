@@ -11,6 +11,7 @@
                 <field name="state" position="before">
                    
                     <button name="get_nomi_data" type="object" string="Nomina Excel"/>
+                    <button name="get_nomi_temporal_data" type="object" string="Nomina Excel Temporales"/>
                     <!--
                      <button name="duracion_fechas" type="object" string="MODIFICAR"/>
                     -->
@@ -129,6 +130,7 @@
             </form>
         </field>
     </record>
+
 
     <!--
     <record id="action_payroll_reporting_excel" model="ir.actions.act_window">

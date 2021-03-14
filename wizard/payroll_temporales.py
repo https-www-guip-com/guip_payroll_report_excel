@@ -14,103 +14,14 @@ from odoo import fields, models, api, _
 from odoo.exceptions import ValidationError
 from xlsxwriter.utility import xl_rowcol_to_cell
 
-    
-#CODIGO AGREGADO POR ARIEL CERRRATO CODIGO BUENO.
 
-
-class payroll_report_excel(models.TransientModel):
-    _name = 'payroll.report.excel'
-
-    name = fields.Char('File Name', size=256, readonly=True)
-    file_download = fields.Binary('Download payroll', readonly=True)
-
-class Rule(models.Model):
-    _inherit = 'hr.salary.rule'
-
-    add_rule_ids = fields.Many2many('hr.salary.rule',
-                                    relation='add_rule_tbl',
-                                    column1='r_id',
-                                    column2='r1_id',
-                                    string='Add Rules')
-    sub_rule_ids = fields.Many2many('hr.salary.rule',
-                                    relation='sub_rule_tbl',
-                                    column1='r_id',
-                                    column2='r1_id',
-                                    string='Sub Rules')
-
-class hr_payslip(models.Model):
-    _inherit = 'hr.payslip'
-    
-    
-    @api.one
-    def get_amount_from_rule_code(self, rule_code):
-        line = self.env['hr.payslip.line'].search([('slip_id', '=', self.id), ('code', '=', rule_code)])
-        if line:
-            return round(line.total, 2)
-        else:
-            return 0.0
-
-    @api.one
-    def update_sheet(self):
-        for slip_line in self.env['hr.payslip.line'].search([('slip_id', '=', self.id)]):
-            final_total = 0
-            if slip_line.salary_rule_id.add_rule_ids or slip_line.salary_rule_id.sub_rule_ids:
-                for add_line in slip_line.salary_rule_id.add_rule_ids:
-                    line = self.env['hr.payslip.line'].search([('slip_id', '=', self.id),
-                                 ('salary_rule_id', '=', add_line.id)])
-                    if line:
-                        final_total += line.rate * line.amount * line.quantity / 100
-                for sub_line in line.salary_rule_id.sub_rule_ids:
-                    line = self.search([('slip_id', '=', self.id),
-                                 ('salary_rule_id', '=', sub_line.id)])
-                    if line:
-                        final_total -= line.rate * line.amount * line.quantity / 100
-                slip_line.amount = final_total
-
-   
-    @api.one
-    def compute_sheet(self):
-        if not self.line_ids:
-            super(hr_payslip, self).compute_sheet()
-        self.update_sheet()
-        return True
-
-class PayslipBatches(models.Model):
+class PayslipTemportalesBatches(models.Model):
     _inherit = 'hr.payslip.run'
     
-    #Esta variable son para cobrar el aguinaldo o el catorceavo del sueldo proporcional
-    aguinaldo = fields.Boolean('Aguinaldo')
-    catorceavo = fields.Boolean('Catorceavo')
-    #name = fields.Char('File Name', size=256, readonly=True)
-    file_data = fields.Binary('File')
-
-
+     #ULTIMOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+    #ULTIMOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
     @api.multi
-    def get_all_columns(self):
-        result = {}
-        all_col_list_seq = []
-        if self.slip_ids:
-            for line in self.env['hr.payslip.line'].search([('slip_id', 'in', self.slip_ids.ids)], order="sequence"):
-                if line.code not in all_col_list_seq:
-                    all_col_list_seq.append(line.code)
-                if line.code not in result.keys():
-                    result[line.code] = line.name
-        return [result, all_col_list_seq]
-
-    #Suma de las horas extras que esten validadas y que tenga como fechas la de inicio y al del fin
-    @api.multi
-    def duracion_fechas(self):
-        mos = self.slip_ids.employee_id.date_start
-        final = mos.month
-        raise ValidationError(final) 
-
-        #for netu in vaca_validacion:
-        #    if netu.code == 'NET':
-        #        result = super(PayslipBatches, self).write({'amount': to})
-        
-   #ULTIMOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-    @api.multi
-    def get_nomi_data(self):
+    def get_nomi_temporal_data(self):
         file_name = _(self.name +'.xlsx')
         fp = BytesIO()
 
@@ -286,7 +197,7 @@ class PayslipBatches(models.Model):
             total_dias_trabajados = {}
             total_dias_no_trabajo = {}
             lista = []
-            tr = True
+            tr = False
             fecha_ingreso_calculo_rap = 0
 
             vaca_validacion = self.env['hr.leave'].search([('employee_id.id', '=', slip.employee_id.id),('state', '=', 'validate')]) 
@@ -1068,7 +979,8 @@ class PayslipBatches(models.Model):
             #FORMULA RAP SUELDO
             to_rap = (tot_sueld - seguro_configu.techo_rap)
             to_raa =  (to_rap * 0.015)
-            total_rap = float_round((to_raa/2), precision_digits=2)  
+            total_rap = 0.0 
+            #float_round((to_raa/2), precision_digits=2)  
           
             #CREO EL RAP QUINCENAL EN LA PESTANA DE ACUMULADOS DEL RAP
             if len(rap_acumul_creacion) > 0:
@@ -2044,5 +1956,3 @@ class PayslipBatches(models.Model):
             'target': 'new',
             'context': self._context,
         }
-
-   
